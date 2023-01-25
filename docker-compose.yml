@@ -1,0 +1,47 @@
+version: '3'
+
+services:
+  rocketchat:
+    image: registry.rocket.chat/rocketchat/rocket.chat:${RELEASE:-latest}
+    restart: on-failure
+    hostname: team.example.com
+    container_name: rocketchat
+    #labels:
+    #  traefik.enable: "true"
+    #  traefik.http.routers.rocketchat.rule: Host(`team.example.com`)
+    #  traefik.http.routers.rocketchat.tls: "true"
+    #  traefik.http.routers.rocketchat.entrypoints: https
+    #  traefik.http.routers.rocketchat.tls.certresolver: le
+    environment:
+      MONGO_URL: "mongodb://mongodb:27017/rocketchat?replicaSet=rs0"
+      MONGO_OPLOG_URL: "mongodb://mongodb:27017local?replicaSet=rs0"
+      ROOT_URL: http://localhost
+      PORT: 3000
+      DEPLOY_METHOD: docker
+      DEPLOY_PLATFORM: 'linux'
+    depends_on:
+      - mongodb
+    expose:
+      - 3000
+    ports:
+      - "3000:3000"
+
+  mongodb:
+    hostname: mongodb
+    container_name: mongodb
+    image: docker.io/bitnami/mongodb:4.4
+    restart: on-failure
+    volumes:
+      - mongodb_data:/bitnami/mongodb
+    environment:
+      MONGODB_REPLICA_SET_MODE: primary
+      MONGODB_REPLICA_SET_NAME: rs0
+      MONGODB_PORT_NUMBER: 27017
+      MONGODB_INITIAL_PRIMARY_HOST: mongodb
+      MONGODB_INITIAL_PRIMARY_PORT_NUMBER: 27017
+      MONGODB_ADVERTISED_HOSTNAME: mongodb
+      MONGODB_ENABLE_JOURNAL: 'true'
+      ALLOW_EMPTY_PASSWORD: 'yes'
+
+volumes:
+  mongodb_data: { driver: local }
